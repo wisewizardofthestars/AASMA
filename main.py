@@ -2,6 +2,7 @@ import axelrod as axl
 import random
 from players import players
 import os
+import pandas as pd
 
 # Generate valid PD payoffs
 def generate_pd_payoffs(t_range=(4.0, 6.0), max_attempts=1000, precision=2):
@@ -32,38 +33,99 @@ def generate_pd_payoffs(t_range=(4.0, 6.0), max_attempts=1000, precision=2):
 
     raise ValueError("Failed to generate valid Prisoner's Dilemma payoffs.")
 
-R, S, T, P = generate_pd_payoffs() 
-game = axl.Game(r=R, s=S, t=T, p=P)
+def generate_pd_payoffs_zd_safe():
+    max_attempts = 1000
+    for _ in range(max_attempts):
+        R, S, T, P = generate_pd_payoffs()
+        game = axl.Game(r=R, s=S, t=T, p=P)
+        try:
+            # instantiate zero determinant strategies to check
+            player1 = axl.ZDExtort2()
+            player1.set_match_attributes(game=game)
 
-noise = round(random.uniform(0, 0.1), 2)
-prob_end = round(random.uniform(0, 0.1), 2)
-repetitions = random.randint(10, 100)
-turns = random.randint(1, 200)
+            player2 = axl.ZDGTFT2()
+            player2.set_match_attributes(game=game)
+            return R, S, T, P
+        except ValueError:
+            continue
+    raise ValueError("Unable to generate payoffs valid for ZD strategies after many attempts.")
 
-# Print configuration info
-print(f"Payoffs - R: {R}, S: {S}, T: {T}, P: {P}")
-print(f"Noise: {noise}")
-print(f"Proability ending: {prob_end}")
-print(f"Repetitions: {repetitions}")
-print(f"Turns: {turns}")
+def run_once():
+    R, S, T, P = generate_pd_payoffs_zd_safe() 
+    game = axl.Game(r=R, s=S, t=T, p=P)
 
-# Create tournaments
-standard_tournament = axl.Tournament(players, game=game, repetitions=repetitions, turns=turns)
-noisy_tournament = axl.Tournament(players, game=game, noise=noise, repetitions=repetitions, turns=turns)
-prob_tournament = axl.Tournament(players, game=game, prob_end=prob_end, repetitions=repetitions, turns=turns)
-prob_noisy_tournament = axl.Tournament(players, game=game, noise=noise, prob_end=prob_end, repetitions=repetitions, turns=turns)
+    noise = round(random.uniform(0, 0.1), 2)
+    prob_end = round(random.uniform(0, 0.1), 2)
+    repetitions = random.randint(10, 100)
+    turns = random.randint(1, 200)
+
+    # Print configuration info
+    print(f"Payoffs - R: {R}, S: {S}, T: {T}, P: {P}")
+    print(f"Noise: {noise}")
+    print(f"Proability ending: {prob_end}")
+    print(f"Repetitions: {repetitions}")
+    print(f"Turns: {turns}")
+
+    tournaments = {
+        'standard': axl.Tournament(players, game=game, repetitions=repetitions, turns=turns),
+        'noisy': axl.Tournament(players, game=game, noise=noise, repetitions=repetitions, turns=turns),
+        'probabilistic': axl.Tournament(players, game=game, prob_end=prob_end, repetitions=repetitions, turns=turns),
+        'prob_noisy': axl.Tournament(players, game=game, noise=noise, prob_end=prob_end, repetitions=repetitions, turns=turns)
+    }
+
+    results = {}
+
+    for name, tourn in tournaments.items():
+        res = tourn.play(processes=os.cpu_count())
+        summary_list = res.summarise()
+        df = pd.DataFrame(summary_list)
+        #df =res.summarise()
+        df['R'] = R
+        df['S'] = S
+        df['T'] = T
+        df['P'] = P
+        df['noise'] = noise
+        df['prob_end'] = prob_end
+        df['repetitions'] = repetitions
+        df['turns'] = turns
+        df['tournament'] = name
+        results[name] = df
+    return results
+
+if __name__ == "__main__":
+    runs = 10
+    agg = {key: [] for key in ['standard', 'noisy', 'probabilistic', 'prob_noisy']}
+
+    for i in range(1, runs + 1):
+        print(f"Run {i}/{runs}")
+        out = run_once()
+        for key, df in out.items():
+                agg[key].append(df)
+    
+    for key,dfs in agg.items():
+        full = pd.concat(dfs, ignore_index=True)
+        filename = f"{key}_aggregated.csv"
+        full.to_csv(filename, index=False)
+        print(f"Results saved to {filename}")
+
+
+    # Create tournaments
+    #standard_tournament = axl.Tournament(players, game=game, repetitions=repetitions, turns=turns)
+    #noisy_tournament = axl.Tournament(players, game=game, noise=noise, repetitions=repetitions, turns=turns)
+    #prob_tournament = axl.Tournament(players, game=game, prob_end=prob_end, repetitions=repetitions, turns=turns)
+    #prob_noisy_tournament = axl.Tournament(players, game=game, noise=noise, prob_end=prob_end, repetitions=repetitions, turns=turns)
 
 # Run tournaments
-standard_results = standard_tournament.play(processes=os.cpu_count())
-noisy_results = noisy_tournament.play(processes=os.cpu_count())
-prob_results = prob_tournament.play(processes=os.cpu_count())
-prob_noisy_results = prob_noisy_tournament.play(processes=os.cpu_count())
+#standard_results = standard_tournament.play(processes=os.cpu_count())
+#noisy_results = noisy_tournament.play(processes=os.cpu_count())
+#prob_results = prob_tournament.play(processes=os.cpu_count())
+#prob_noisy_results = prob_noisy_tournament.play(processes=os.cpu_count())
 
 # Get results summary
-standard_results.write_summary('standard_summary.csv')
-noisy_results.write_summary('noisy_summary.csv')
-prob_results.write_summary('prob_summary.csv')
-prob_noisy_results.write_summary('prob_noisy_summary.csv')
+#standard_results.write_summary('standard_summary.csv')
+#noisy_results.write_summary('noisy_summary.csv')
+#prob_results.write_summary('prob_summary.csv')
+#prob_noisy_results.write_summary('prob_noisy_summary.csv')
 
 # Plot results only of prob noisy
 # plot = axl.Plot(prob_noisy_results)
