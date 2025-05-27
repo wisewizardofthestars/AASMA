@@ -59,18 +59,24 @@ def run_once():
     repetitions = random.randint(10, 100)
     turns = random.randint(1, 200)
 
+    # Randomly select a subset of strategies for this run
+    n_strategies = random.randint(2, len(players))
+    selected_players = random.sample(players, n_strategies)
+
     # Print configuration info
     print(f"Payoffs - R: {R}, S: {S}, T: {T}, P: {P}")
     print(f"Noise: {noise}")
     print(f"Proability ending: {prob_end}")
     print(f"Repetitions: {repetitions}")
     print(f"Turns: {turns}")
+    print(f"Number of strategies: {n_strategies}")
+    print(f"Selected strategies: {[repr(p) for p in selected_players]}")
 
     tournaments = {
-        'standard': axl.Tournament(players, game=game, repetitions=repetitions, turns=turns),
-        'noisy': axl.Tournament(players, game=game, noise=noise, repetitions=repetitions, turns=turns),
-        'probabilistic': axl.Tournament(players, game=game, prob_end=prob_end, repetitions=repetitions, turns=turns),
-        'prob_noisy': axl.Tournament(players, game=game, noise=noise, prob_end=prob_end, repetitions=repetitions, turns=turns)
+        'standard': axl.Tournament(selected_players, game=game, repetitions=repetitions, turns=turns),
+        'noisy': axl.Tournament(selected_players, game=game, noise=noise, repetitions=repetitions, turns=turns),
+        'probabilistic': axl.Tournament(selected_players, game=game, prob_end=prob_end, repetitions=repetitions, turns=turns),
+        'prob_noisy': axl.Tournament(selected_players, game=game, noise=noise, prob_end=prob_end, repetitions=repetitions, turns=turns)
     }
 
     results = {}
@@ -89,10 +95,15 @@ def run_once():
         df['repetitions'] = repetitions
         df['turns'] = turns
         df['tournament'] = name
+        df['n_strategies'] = n_strategies
         results[name] = df
     return results
 
 if __name__ == "__main__":
+    # We got to set a random seed for reproducibility
+    RANDOM_SEED = 42
+    random.seed(RANDOM_SEED)
+
     runs = 10
     agg = {key: [] for key in ['standard', 'noisy', 'probabilistic', 'prob_noisy']}
 
