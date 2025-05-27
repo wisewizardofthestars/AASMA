@@ -3,6 +3,7 @@ import random
 from players import players
 import os
 import pandas as pd
+import csv
 
 # Generate valid PD payoffs
 def generate_pd_payoffs(t_range=(4.0, 6.0), max_attempts=1000, precision=2):
@@ -50,7 +51,7 @@ def generate_pd_payoffs_zd_safe():
             continue
     raise ValueError("Unable to generate payoffs valid for ZD strategies after many attempts.")
 
-def run_once():
+def run_once(run_number=None):
     R, S, T, P = generate_pd_payoffs_zd_safe() 
     game = axl.Game(r=R, s=S, t=T, p=P)
 
@@ -62,6 +63,19 @@ def run_once():
     # Randomly select a subset of strategies for this run
     n_strategies = random.randint(2, len(players))
     selected_players = random.sample(players, n_strategies)
+    selected_names = [repr(p) for p in selected_players]
+
+    # Save run configuration to CSV
+    config_file = 'run_configs.csv'
+    write_header = not os.path.exists(config_file)
+    with open(config_file, 'a', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        if write_header:
+            writer.writerow(['run', 'R', 'S', 'T', 'P', 'noise', 'prob_end', 'repetitions', 'turns', 'n_strategies', 'selected_strategies'])
+        writer.writerow([
+            run_number,
+            R, S, T, P, noise, prob_end, repetitions, turns, n_strategies, '|'.join(selected_names)
+        ])
 
     # Print configuration info
     print(f"Payoffs - R: {R}, S: {S}, T: {T}, P: {P}")
@@ -70,7 +84,7 @@ def run_once():
     print(f"Repetitions: {repetitions}")
     print(f"Turns: {turns}")
     print(f"Number of strategies: {n_strategies}")
-    print(f"Selected strategies: {[repr(p) for p in selected_players]}")
+    print(f"Selected strategies: {selected_names}")
 
     tournaments = {
         'standard': axl.Tournament(selected_players, game=game, repetitions=repetitions, turns=turns),
@@ -103,13 +117,14 @@ if __name__ == "__main__":
     # We got to set a random seed for reproducibility
     RANDOM_SEED = 42
     random.seed(RANDOM_SEED)
+    #sets the seed for Python's built-in random module. This means that every time you call any function from the random module (like random.uniform, random.randint, random.sample, etc.), the sequence of random numbers generated will be the same for the same seed.
 
     runs = 10
     agg = {key: [] for key in ['standard', 'noisy', 'probabilistic', 'prob_noisy']}
 
     for i in range(1, runs + 1):
         print(f"Run {i}/{runs}")
-        out = run_once()
+        out = run_once(run_number=i)
         for key, df in out.items():
                 agg[key].append(df)
     
