@@ -61,7 +61,7 @@ def run_once(run_number=None):
     turns = random.randint(1, 200)
 
     # Randomly select a subset of strategies for this run
-    n_strategies = random.randint(2, len(players))
+    n_strategies = random.randint(3, len(players))
     selected_players = random.sample(players, n_strategies)
     selected_names = [repr(p) for p in selected_players]
 
