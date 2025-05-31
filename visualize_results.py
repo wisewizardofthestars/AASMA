@@ -83,9 +83,9 @@ if dfs:
         plt.close()
         print('Saved plot: graphs/correlation_heatmap.png')
 
-        # Scatter plot: Median Score vs. Noise by Strategy
+        # Scatter plot: Median Score vs. Noise by Strategy (use BaseName)
         plt.figure(figsize=(14, 8))
-        sns.scatterplot(data=all_data, x='noise', y='Median_score', hue='Name', alpha=0.7)
+        sns.scatterplot(data=all_data, x='noise', y='Median_score', hue='BaseName', alpha=0.7)
         plt.title('Median Score vs. Noise by Strategy')
         plt.ylabel('Median Score')
         plt.xlabel('Noise')
@@ -95,9 +95,10 @@ if dfs:
         plt.close()
         print('Saved plot: graphs/score_vs_noise.png')
 
-        # Barplot: Number of wins (highest median score) per strategy
+        # Barplot: Number of wins (highest median score) per strategy (use BaseName)
         win_counts = all_data.loc[all_data.groupby(['tournament_type', 'Rank'])['Median_score'].idxmax()]
-        win_summary = win_counts['Name'].value_counts().sort_values(ascending=False)
+        win_counts['BaseName'] = win_counts['Name'].apply(extract_base_name)
+        win_summary = win_counts['BaseName'].value_counts().sort_values(ascending=False)
         plt.figure(figsize=(12, 6))
         sns.barplot(x=win_summary.index, y=win_summary.values)
         plt.title('Number of Tournament Wins per Strategy (Highest Median Score)')
@@ -109,9 +110,9 @@ if dfs:
         plt.close()
         print('Saved plot: graphs/strategy_win_counts.png')
 
-        # Scatter plot: Cooperation vs. Median Score
+        # Scatter plot: Cooperation vs. Median Score (use BaseName)
         plt.figure(figsize=(12, 8))
-        sns.scatterplot(data=all_data, x='Cooperation_rating', y='Median_score', hue='Name', alpha=0.7)
+        sns.scatterplot(data=all_data, x='Cooperation_rating', y='Median_score', hue='BaseName', alpha=0.7)
         plt.title('Cooperation Rating vs. Median Score by Strategy')
         plt.xlabel('Cooperation Rating')
         plt.ylabel('Median Score')
@@ -121,19 +122,9 @@ if dfs:
         plt.close()
         print('Saved plot: graphs/cooperation_vs_score.png')
 
-        # Statistical significance: ANOVA for top strategies
-        from scipy.stats import f_oneway
-        top_strats = all_data['Name'].value_counts().index[:5]
-        anova_data = [all_data.loc[all_data['Name'] == strat, 'Median_score'] for strat in top_strats]
-        f_stat, p_val = f_oneway(*anova_data)
-        with open('graphs/anova_top5.txt', 'w') as f:
-            f.write(f"ANOVA F-statistic: {f_stat:.3f}\nP-value: {p_val:.3g}\n")
-            f.write(f"Top 5 strategies: {list(top_strats)}\n")
-        print('Saved ANOVA results for top 5 strategies to graphs/anova_top5.txt')
-
-        # Parameter sensitivity: Score vs. n_strategies
+        # Parameter sensitivity: Score vs. n_strategies (use BaseName)
         plt.figure(figsize=(12, 8))
-        sns.scatterplot(data=all_data, x='n_strategies', y='Median_score', hue='Name', alpha=0.7)
+        sns.scatterplot(data=all_data, x='n_strategies', y='Median_score', hue='BaseName', alpha=0.7)
         plt.title('Median Score vs. Number of Strategies in Tournament')
         plt.xlabel('Number of Strategies')
         plt.ylabel('Median Score')
@@ -143,8 +134,8 @@ if dfs:
         plt.close()
         print('Saved plot: graphs/score_vs_n_strategies.png')
 
-        # Robustness: Boxplot of Median Score Std Dev per Strategy
-        score_std = all_data.groupby('Name')['Median_score'].std().sort_values(ascending=False)
+        # Robustness: Boxplot of Median Score Std Dev per Strategy (use BaseName)
+        score_std = all_data.groupby('BaseName')['Median_score'].std().sort_values(ascending=False)
         plt.figure(figsize=(12, 6))
         sns.barplot(x=score_std.index, y=score_std.values)
         plt.title('Score Standard Deviation per Strategy (Robustness)')
@@ -156,9 +147,9 @@ if dfs:
         plt.close()
         print('Saved plot: graphs/score_std_per_strategy.png')
 
-        # Cooperation vs. Score by Tournament Type (FacetGrid)
+        # Cooperation vs. Score by Tournament Type (FacetGrid, use BaseName)
         g = sns.FacetGrid(all_data, col='tournament_type', col_wrap=2, height=5, sharex=True, sharey=True)
-        g.map_dataframe(sns.scatterplot, x='Cooperation_rating', y='Median_score', hue='Name', alpha=0.7)
+        g.map_dataframe(sns.scatterplot, x='Cooperation_rating', y='Median_score', hue='BaseName', alpha=0.7)
         g.add_legend()
         g.set_axis_labels('Cooperation Rating', 'Median Score')
         g.fig.suptitle('Cooperation vs. Median Score by Tournament Type', y=1.02)
