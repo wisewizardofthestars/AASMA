@@ -57,11 +57,16 @@ def run_once(run_number=None):
     turns = random.randint(1, 200)
 
     # Randomly select a subset of strategies for this run
+    #But not every strategy faces every other in every run!
     all_strategy_classes = non_meta_strategies + meta_strategy_classes
     n_strategies = random.randint(3, len(all_strategy_classes))
     selected_classes = random.sample(all_strategy_classes, n_strategies)
-
     base_classes = [cls for cls in selected_classes if cls in non_meta_strategies]
+
+   # selected_classes = all_strategy_classes
+    #n_strategies = len(selected_classes)
+
+    #base_classes = [cls for cls in all_strategy_classes if cls in non_meta_strategies]
 
     selected_players = []
     for cls in selected_classes:
@@ -115,6 +120,30 @@ def run_once(run_number=None):
         df['tournament'] = name
         df['n_strategies'] = n_strategies
         df['run'] = run_number
+        # payoff_matrix = res.payoff_matrix
+        # player_names = [repr(p) for p in tourn.players]
+        # rows = []
+        # for i, name_i in enumerate(player_names):
+        #     for j, name_j in enumerate(player_names):
+        #         if i == j:
+        #             continue  # skip self-play
+        #         rows.append({
+        #             'Name': name_i,
+        #             'Opponent': name_j,
+        #             'Median_score': payoff_matrix[i][j],
+        #             'R': R,
+        #             'S': S,
+        #             'T': T,
+        #             'P': P,
+        #             'noise': noise,
+        #             'prob_end': prob_end,
+        #             'repetitions': repetitions,
+        #             'turns': turns,
+        #             'tournament': name,
+        #             'n_strategies': n_strategies,
+        #             'run': run_number
+        #         })
+        # df = pd.DataFrame(rows)
         df.to_csv(f"{name}_aggregated.csv", mode='a', header=not os.path.exists(f"{name}_aggregated.csv"), index=False)
 
 if __name__ == "__main__":
