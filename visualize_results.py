@@ -175,9 +175,9 @@ if dfs:
         print('Pairwise matchup matrix skipped: required columns (Name, Opponent, Median_score) not found.')
 
     # --- Advanced: Clustering of Strategies (Hierarchical) ---
-    if 'Name' in all_data.columns and 'Median_score' in all_data.columns and 'tournament_type' in all_data.columns:
-        # Create a matrix: rows=strategies, columns=tournament types, values=mean median score
-        perf_matrix = all_data.pivot_table(index='Name', columns='tournament_type', values='Median_score', aggfunc='mean').fillna(0)
+    if 'BaseName' in all_data.columns and 'Median_score' in all_data.columns and 'tournament_type' in all_data.columns:
+        # Create a matrix: rows=base strategies, columns=tournament types, values=mean median score
+        perf_matrix = all_data.pivot_table(index='BaseName', columns='tournament_type', values='Median_score', aggfunc='mean').fillna(0)
         from scipy.cluster.hierarchy import linkage, dendrogram
         import numpy as np
         plt.figure(figsize=(10, 6))
