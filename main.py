@@ -5,7 +5,6 @@ import os
 import pandas as pd
 import csv
 
-# Generate valid PD payoffs
 def generate_pd_payoffs(t_range=(4.0, 6.0), max_attempts=1000, precision=2):
     """
     Generates valid Prisoner's Dilemma payoffs without artificial buffers:
@@ -17,21 +16,18 @@ def generate_pd_payoffs(t_range=(4.0, 6.0), max_attempts=1000, precision=2):
     - precision: Decimal precision to round results
 
     Returns:
-    - Tuple (R, S, T, P)
+    - R, S, T, P
 
     Raises:
     - ValueError if no valid set is found after max_attempts
     """
     for _ in range(max_attempts):
-        T = random.uniform(*t_range)
-        R = random.uniform(2.0, T)
-        P = random.uniform(1.0, R)
-        S = random.uniform(0.0, P)
-
-        # Strict inequality and strategic condition
+        T = round(random.uniform(*t_range), precision)
+        R = round(random.uniform(2.0, T), precision)
+        P = round(random.uniform(1.0, R), precision)
+        S = round(random.uniform(0.0, P), precision)
         if T > R > P > S and 2 * R > T + S:
-            return tuple(round(x, precision) for x in (R, S, T, P))
-
+            return R, S, T, P
     raise ValueError("Failed to generate valid Prisoner's Dilemma payoffs.")
 
 def generate_pd_payoffs_zd_safe():
@@ -49,7 +45,7 @@ def generate_pd_payoffs_zd_safe():
             return R, S, T, P
         except ValueError:
             continue
-    raise ValueError("Unable to generate payoffs valid for ZD strategies after many attempts.")
+    raise ValueError("Unable to generate payoffs valid for ZD strategies.")
 
 def run_once(run_number=None):
     R, S, T, P = generate_pd_payoffs_zd_safe() 
@@ -70,7 +66,6 @@ def run_once(run_number=None):
     selected_players = []
     for cls in selected_classes:
         if cls in meta_strategy_classes:
-            # Build the meta strategy with only selected base classes
             player = cls(team=base_classes)
         else:
             player = cls()
@@ -106,13 +101,9 @@ def run_once(run_number=None):
         'prob_noisy': axl.Tournament(selected_players, game=game, noise=noise, prob_end=prob_end, repetitions=repetitions, turns=turns)
     }
 
-    results = {}
-
     for name, tourn in tournaments.items():
         res = tourn.play(processes=os.cpu_count())
-        summary_list = res.summarise()
-        df = pd.DataFrame(summary_list)
-        #df =res.summarise()
+        df = pd.DataFrame(res.summarise())
         df['R'] = R
         df['S'] = S
         df['T'] = T
@@ -123,49 +114,19 @@ def run_once(run_number=None):
         df['turns'] = turns
         df['tournament'] = name
         df['n_strategies'] = n_strategies
-        results[name] = df
-    return results
+        df['run'] = run_number
+        df.to_csv(f"{name}_aggregated.csv", mode='a', header=not os.path.exists(f"{name}_aggregated.csv"), index=False)
 
 if __name__ == "__main__":
-    # We got to set a random seed for reproducibility
     RANDOM_SEED = 42
     random.seed(RANDOM_SEED)
-    #sets the seed for Python's built-in random module. This means that every time you call any function from the random module (like random.uniform, random.randint, random.sample, etc.), the sequence of random numbers generated will be the same for the same seed.
 
-    runs = 10
-    agg = {key: [] for key in ['standard', 'noisy', 'probabilistic', 'prob_noisy']}
+    total_runs = 1000
 
-    for i in range(1, runs + 1):
-        print(f"Run {i}/{runs}")
-        out = run_once(run_number=i)
-        for key, df in out.items():
-                agg[key].append(df)
-    
-    for key,dfs in agg.items():
-        full = pd.concat(dfs, ignore_index=True)
-        filename = f"{key}_aggregated.csv"
-        full.to_csv(filename, index=False)
-        print(f"Results saved to {filename}")
+    for file in ['run_configs.csv', 'standard_aggregated.csv', 'noisy_aggregated.csv', 'probabilistic_aggregated.csv', 'prob_noisy_aggregated.csv']:
+        if os.path.exists(file):
+            os.remove(file)
 
-
-    # Create tournaments
-    #standard_tournament = axl.Tournament(players, game=game, repetitions=repetitions, turns=turns)
-    #noisy_tournament = axl.Tournament(players, game=game, noise=noise, repetitions=repetitions, turns=turns)
-    #prob_tournament = axl.Tournament(players, game=game, prob_end=prob_end, repetitions=repetitions, turns=turns)
-    #prob_noisy_tournament = axl.Tournament(players, game=game, noise=noise, prob_end=prob_end, repetitions=repetitions, turns=turns)
-
-# Run tournaments
-#standard_results = standard_tournament.play(processes=os.cpu_count())
-#noisy_results = noisy_tournament.play(processes=os.cpu_count())
-#prob_results = prob_tournament.play(processes=os.cpu_count())
-#prob_noisy_results = prob_noisy_tournament.play(processes=os.cpu_count())
-
-# Get results summary
-#standard_results.write_summary('standard_summary.csv')
-#noisy_results.write_summary('noisy_summary.csv')
-#prob_results.write_summary('prob_summary.csv')
-#prob_noisy_results.write_summary('prob_noisy_summary.csv')
-
-# Plot results only of prob noisy
-# plot = axl.Plot(prob_noisy_results)
-# p = plot.save_all_plots(prefix="../../../../random", title_prefix="random")
+    for i in range(1, total_runs + 1):
+        print(f" Run {i}/{total_runs}")
+        run_once(run_number=i)
