@@ -8,7 +8,7 @@ types = ['standard', 'noisy', 'probabilistic', 'prob_noisy']
 dfs = []
 
 for t in types:
-    filename = f"{t}_aggregated.csv"
+    filename = os.path.join("csv", f"{t}_aggregated.csv")
     if not os.path.exists(filename):
         print(f"File {filename} not found, skipping.")
         continue
