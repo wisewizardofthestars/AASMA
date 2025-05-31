@@ -3,10 +3,15 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 import scipy
+import re
 
 # List of result files to visualize
 types = ['standard', 'noisy', 'probabilistic', 'prob_noisy']
 dfs = []
+
+def extract_base_name(name):
+    # Remove anything after ':' or '(' or '[' (for meta strategies and parameterized names)
+    return re.split(r'[:\(\[]', name)[0].strip()
 
 for t in types:
     filename = os.path.join("csv", f"{t}_aggregated.csv")
@@ -15,11 +20,13 @@ for t in types:
         continue
     df = pd.read_csv(filename)
     df['tournament_type'] = t
+    df['BaseName'] = df['Name'].apply(extract_base_name)
     dfs.append(df)
     # Plot average score per strategy (original barplot)
-    if 'Name' in df.columns and 'Median_score' in df.columns:
+    if 'BaseName' in df.columns and 'Median_score' in df.columns:
         plt.figure(figsize=(12, 6))
-        avg_scores = df.groupby('Name')['Median_score'].mean().sort_values(ascending=False)
+        # Group by BaseName only, averaging across all runs/conditions for this tournament type
+        avg_scores = df.groupby('BaseName')['Median_score'].mean().sort_values(ascending=False)
         sns.barplot(x=avg_scores.index, y=avg_scores.values)
         plt.title(f"Average Median Score per Strategy - {t.capitalize()} Tournament")
         plt.ylabel("Average Median Score")
@@ -30,15 +37,17 @@ for t in types:
         plt.close()
         print(f"Saved plot: graphs/{t}_avg_scores.png")
     else:
-        print(f"'Name' or 'Median_score' column not found in {filename}, skipping plot.")
+        print(f"'BaseName' or 'Median_score' column not found in {filename}, skipping plot.")
 
 # Advanced analysis and comparison plots
 if dfs:
     all_data = pd.concat(dfs, ignore_index=True)
+    all_data['BaseName'] = all_data['Name'].apply(extract_base_name)
     # Boxplot: Score distribution per strategy per tournament type
-    if 'Name' in all_data.columns and 'Median_score' in all_data.columns and 'tournament_type' in all_data.columns:
+    if 'BaseName' in all_data.columns and 'Median_score' in all_data.columns and 'tournament_type' in all_data.columns:
         plt.figure(figsize=(16, 8))
-        sns.boxplot(data=all_data, x='Name', y='Median_score', hue='tournament_type')
+        # Group by BaseName and tournament_type, not by all columns
+        sns.boxplot(data=all_data, x='BaseName', y='Median_score', hue='tournament_type')
         plt.title("Median Score Distribution per Strategy Across Tournament Types")
         plt.ylabel("Median Score")
         plt.xlabel("Strategy")
@@ -49,9 +58,9 @@ if dfs:
         print("Saved plot: graphs/score_distribution_boxplot.png")
 
         # Grouped barplot: Mean median score per strategy per tournament type
-        mean_scores = all_data.groupby(['Name', 'tournament_type'])['Median_score'].mean().reset_index()
+        mean_scores = all_data.groupby(['BaseName', 'tournament_type'])['Median_score'].mean().reset_index()
         plt.figure(figsize=(16, 8))
-        sns.barplot(data=mean_scores, x='Name', y='Median_score', hue='tournament_type')
+        sns.barplot(data=mean_scores, x='BaseName', y='Median_score', hue='tournament_type')
         plt.title("Mean Median Score per Strategy Across Tournament Types")
         plt.ylabel("Mean Median Score")
         plt.xlabel("Strategy")
