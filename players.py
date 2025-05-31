@@ -17,18 +17,4 @@ non_meta_strategies = (
 # Instantiate non-meta players
 non_meta_players = [s() for s in non_meta_strategies]
 
-# Prepare meta strategies using only the above strategies
-meta_strategies = [
-    axl.MetaMixer(team=non_meta_strategies),
-    axl.MetaWinner(team=non_meta_strategies)
-]
-
-# Combine all players
-players = non_meta_players + meta_strategies
-
-# Optional: sort players by name
-players.sort(key=lambda p: repr(p))
-
-# Print for confirmation
-print('Num_players:', len(players))
-print(players)
+meta_strategy_classes = [axl.MetaMixer, axl.MetaWinner]

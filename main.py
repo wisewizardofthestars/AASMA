@@ -1,6 +1,6 @@
 import axelrod as axl
 import random
-from players import players
+from players import non_meta_strategies, meta_strategy_classes
 import os
 import pandas as pd
 import csv
@@ -61,8 +61,21 @@ def run_once(run_number=None):
     turns = random.randint(1, 200)
 
     # Randomly select a subset of strategies for this run
-    n_strategies = random.randint(3, len(players))
-    selected_players = random.sample(players, n_strategies)
+    all_strategy_classes = non_meta_strategies + meta_strategy_classes
+    n_strategies = random.randint(3, len(all_strategy_classes))
+    selected_classes = random.sample(all_strategy_classes, n_strategies)
+
+    base_classes = [cls for cls in selected_classes if cls in non_meta_strategies]
+
+    selected_players = []
+    for cls in selected_classes:
+        if cls in meta_strategy_classes:
+            # Build the meta strategy with only selected base classes
+            player = cls(team=base_classes)
+        else:
+            player = cls()
+        selected_players.append(player)
+
     selected_names = [repr(p) for p in selected_players]
 
     # Save run configuration to CSV
