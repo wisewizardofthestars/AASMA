@@ -145,6 +145,119 @@ def run_once(run_number=None):
         #         })
         # df = pd.DataFrame(rows)
         df.to_csv(f"{name}_aggregated.csv", mode='a', header=not os.path.exists(f"{name}_aggregated.csv"), index=False)
+#forma como fazem no código do paper
+"""       # Compute additional features for each strategy
+        # Normalized rank (r)
+        df = df.sort_values('Median_score', ascending=False).reset_index(drop=True)
+        N = len(df)
+        df['Rank'] = df.index
+        df['Normalized_rank'] = df['Rank'] / (N - 1) if N > 1 else 0
+        # Cooperation ratio (C_r)
+        if 'Cooperation_rating' not in df.columns:
+            # Try to compute if not present
+            if 'Cooperations' in df.columns and 'Turns' in df.columns:
+                df['Cooperation_rating'] = df['Cooperations'] / df['Turns']
+        # Transition rates and memory usage
+        CC_to_C = []
+        CD_to_C = []
+        DC_to_C = []
+        DD_to_C = []
+        memory_usage = []
+        stochastic = []
+        makes_use_of_game = []
+        makes_use_of_length = []
+        for name in df['Name']:
+            # Find the player object
+            player = None
+            for p in selected_players:
+                if repr(p) == name:
+                    player = p
+                    break
+            if player is not None:
+                # Use strategy_classifier for meta info
+                classifier = getattr(player, 'classifier', player.strategy_classifier())
+                stochastic.append(classifier.get('stochastic', False))
+                makes_use_of_game.append(classifier.get('makes_use_of_game', False))
+                makes_use_of_length.append(classifier.get('makes_use_of_length', False))
+                # Memory usage: memory_depth / turns
+                mem_depth = getattr(player, 'memory_depth', None)
+                if mem_depth is not None and turns > 0:
+                    memory_usage.append(mem_depth / turns)
+                else:
+                    memory_usage.append(None)
+                # Transition rates: use state_distribution if available
+                try:
+                    sd = player.state_distribution
+                    CC = sd.get(('C', 'C'), 0)
+                    CD = sd.get(('C', 'D'), 0)
+                    DC = sd.get(('D', 'C'), 0)
+                    DD = sd.get(('D', 'D'), 0)
+                    # Next move after each state
+                    CC_C = player._state_to_action.get(('C', 'C', 'C'), 0)
+                    CD_C = player._state_to_action.get(('C', 'D', 'C'), 0)
+                    DC_C = player._state_to_action.get(('D', 'C', 'C'), 0)
+                    DD_C = player._state_to_action.get(('D', 'D', 'C'), 0)
+                    CC_to_C.append(CC_C / CC if CC > 0 else None)
+                    CD_to_C.append(CD_C / CD if CD > 0 else None)
+                    DC_to_C.append(DC_C / DC if DC > 0 else None)
+                    DD_to_C.append(DD_C / DD if DD > 0 else None)
+                except Exception:
+                    CC_to_C.append(None)
+                    CD_to_C.append(None)
+                    DC_to_C.append(None)
+                    DD_to_C.append(None)
+            else:
+                stochastic.append(None)
+                makes_use_of_game.append(None)
+                makes_use_of_length.append(None)
+                memory_usage.append(None)
+                CC_to_C.append(None)
+                CD_to_C.append(None)
+                DC_to_C.append(None)
+                DD_to_C.append(None)
+        df['CC_to_C_rate'] = CC_to_C
+        df['CD_to_C_rate'] = CD_to_C
+        df['DC_to_C_rate'] = DC_to_C
+        df['DD_to_C_rate'] = DD_to_C
+        df['memory_usage'] = memory_usage
+        df['stochastic'] = stochastic
+        df['makes_use_of_game'] = makes_use_of_game
+        df['makes_use_of_length'] = makes_use_of_length
+        # Calculate extortion factor (chi) and SSE for each strategy
+        extortion_factor_chi = []
+        extortion_SSE = []
+        # For each strategy, collect (self, opponent) average payoffs
+        payoff_matrix = res.payoff_matrix if hasattr(res, 'payoff_matrix') else None
+        for idx, name in enumerate(df['Name']):
+            if payoff_matrix is not None:
+                # Exclude self-play
+                self_payoffs = []
+                opp_payoffs = []
+                for j in range(len(df['Name'])):
+                    if j == idx:
+                        continue
+                    self_payoffs.append(payoff_matrix[idx][j])
+                    opp_payoffs.append(payoff_matrix[j][idx])
+                if len(self_payoffs) > 1:
+                    # Fit line: self = chi * opp + intercept
+                    import numpy as np
+                    from sklearn.linear_model import LinearRegression
+                    X = np.array(opp_payoffs).reshape(-1, 1)
+                    y = np.array(self_payoffs)
+                    reg = LinearRegression().fit(X, y)
+                    chi = reg.coef_[0]
+                    y_pred = reg.predict(X)
+                    sse = np.sum((y - y_pred) ** 2)
+                    extortion_factor_chi.append(chi)
+                    extortion_SSE.append(sse)
+                else:
+                    extortion_factor_chi.append(None)
+                    extortion_SSE.append(None)
+            else:
+                extortion_factor_chi.append(None)
+                extortion_SSE.append(None)
+        df['extortion_factor_chi'] = extortion_factor_chi
+        df['extortion_SSE'] = extortion_SSE"""
 
 if __name__ == "__main__":
     RANDOM_SEED = 42

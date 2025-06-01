@@ -250,4 +250,304 @@ if dfs:
     else:
         print('Could not create payoff pairplot: required columns not found.')
 
+    # --- Multinomial Logistic Regression (robust, standardized, filtered) ---
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.metrics import classification_report
+    import numpy as np
+    # Prepare winners data
+    if 'BaseName' in all_data.columns and 'Median_score' in all_data.columns and 'run' in all_data.columns and 'tournament_type' in all_data.columns:
+        winners = all_data.loc[all_data.groupby(['run', 'tournament_type'])['Median_score'].idxmax()]
+        payoff_vars = ['R', 'S', 'T', 'P']
+        if all(var in winners.columns for var in payoff_vars):
+            # Filter out rare strategies (fewer than 5 wins)
+            counts = winners['BaseName'].value_counts()
+            common_strats = counts[counts >= 5].index
+            winners = winners[winners['BaseName'].isin(common_strats)].copy()
+            # Standardize payoffs
+            scaler = StandardScaler()
+            X = scaler.fit_transform(winners[payoff_vars])
+            y = winners['BaseName']
+            # Fit multinomial logistic regression
+            clf = LogisticRegression(multi_class='multinomial', solver='lbfgs', max_iter=500)
+            clf.fit(X, y)
+            # Save classification report
+            y_pred = clf.predict(X)
+            report = classification_report(y, y_pred)
+            with open('graphs/winner_multinomial_logit_classification_report.txt', 'w') as f:
+                f.write(report)
+            print('Saved classification report: graphs/winner_multinomial_logit_classification_report.txt')
+            # Plot coefficients as heatmap
+            import matplotlib.pyplot as plt
+            import seaborn as sns
+            coef = clf.coef_.T  # shape: (payoff_vars, n_strategies)
+            plt.figure(figsize=(12, 8))
+            sns.heatmap(coef, annot=True, cmap='coolwarm', xticklabels=clf.classes_, yticklabels=payoff_vars)
+            plt.title('Multinomial Logistic Regression Coefficients (Standardized Payoffs)\n(Effect of Payoff on Probability of Each Strategy Winning)')
+            plt.ylabel('Standardized Payoff Variable')
+            plt.xlabel('Strategy')
+            plt.tight_layout()
+            plt.savefig('graphs/winner_multinomial_logit_coef_heatmap.png')
+            plt.close()
+            print('Saved plot: graphs/winner_multinomial_logit_coef_heatmap.png')
+        else:
+            print('Could not run regression: some payoff columns missing.')
+    else:
+        print('Could not run regression: required columns not found.')
+
+    # --- Advanced: Extortion and SSE Analysis ---
+    # Boxplot: Extortion factor (chi) per strategy
+    if 'BaseName' in all_data.columns and 'extortion_factor_chi' in all_data.columns:
+        plt.figure(figsize=(16, 8))
+        sns.boxplot(data=all_data, x='BaseName', y='extortion_factor_chi')
+        plt.title('Extortion Factor (chi) per Strategy')
+        plt.ylabel('Extortion Factor (chi)')
+        plt.xlabel('Strategy')
+        plt.xticks(rotation=90)
+        plt.tight_layout()
+        plt.savefig('graphs/extortion_factor_chi_boxplot.png')
+        plt.close()
+        print('Saved plot: graphs/extortion_factor_chi_boxplot.png')
+
+    # Boxplot: SSE per strategy
+    if 'BaseName' in all_data.columns and 'extortion_SSE' in all_data.columns:
+        plt.figure(figsize=(16, 8))
+        sns.boxplot(data=all_data, x='BaseName', y='extortion_SSE')
+        plt.title('SSE (Deviation from ZD Linearity) per Strategy')
+        plt.ylabel('Sum of Squared Errors (SSE)')
+        plt.xlabel('Strategy')
+        plt.xticks(rotation=90)
+        plt.tight_layout()
+        plt.savefig('graphs/extortion_SSE_boxplot.png')
+        plt.close()
+        print('Saved plot: graphs/extortion_SSE_boxplot.png')
+
+    # Boxplot: Normalized rank per strategy
+    if 'BaseName' in all_data.columns and 'Normalized_rank' in all_data.columns:
+        plt.figure(figsize=(16, 8))
+        sns.boxplot(data=all_data, x='BaseName', y='Normalized_rank')
+        plt.title('Normalized Rank per Strategy')
+        plt.ylabel('Normalized Rank')
+        plt.xlabel('Strategy')
+        plt.xticks(rotation=90)
+        plt.tight_layout()
+        plt.savefig('graphs/normalized_rank_boxplot.png')
+        plt.close()
+        print('Saved plot: graphs/normalized_rank_boxplot.png')
+
+    # Correlation heatmap including new features
+    extra_numeric = ['Median_score', 'Cooperation_rating', 'Normalized_rank', 'extortion_factor_chi', 'extortion_SSE', 'noise', 'prob_end', 'repetitions', 'turns', 'n_strategies']
+    corr2 = all_data[extra_numeric].corr()
+    plt.figure(figsize=(12, 10))
+    sns.heatmap(corr2, annot=True, cmap='coolwarm')
+    plt.title('Correlation Matrix Including Extortion and Rank Features')
+    plt.tight_layout()
+    plt.savefig('graphs/extended_correlation_heatmap.png')
+    plt.close()
+    print('Saved plot: graphs/extended_correlation_heatmap.png')
+
+    # Scatterplot: Cooperation ratio vs. extortion factor
+    if 'Cooperation_rating' in all_data.columns and 'extortion_factor_chi' in all_data.columns:
+        plt.figure(figsize=(12, 8))
+        sns.scatterplot(data=all_data, x='Cooperation_rating', y='extortion_factor_chi', hue='BaseName', alpha=0.7)
+        plt.title('Cooperation Ratio vs. Extortion Factor (chi)')
+        plt.xlabel('Cooperation Ratio')
+        plt.ylabel('Extortion Factor (chi)')
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.tight_layout()
+        plt.savefig('graphs/cooperation_vs_extortion_factor.png')
+        plt.close()
+        print('Saved plot: graphs/cooperation_vs_extortion_factor.png')
+
+    # Scatterplot: Cooperation ratio vs. SSE
+    if 'Cooperation_rating' in all_data.columns and 'extortion_SSE' in all_data.columns:
+        plt.figure(figsize=(12, 8))
+        sns.scatterplot(data=all_data, x='Cooperation_rating', y='extortion_SSE', hue='BaseName', alpha=0.7)
+        plt.title('Cooperation Ratio vs. SSE')
+        plt.xlabel('Cooperation Ratio')
+        plt.ylabel('Sum of Squared Errors (SSE)')
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.tight_layout()
+        plt.savefig('graphs/cooperation_vs_extortion_SSE.png')
+        plt.close()
+        print('Saved plot: graphs/cooperation_vs_extortion_SSE.png')
+
+    # Line plot: Extortion factor vs. noise/prob_end
+    if 'extortion_factor_chi' in all_data.columns and 'noise' in all_data.columns:
+        plt.figure(figsize=(12, 8))
+        sns.lineplot(data=all_data, x='noise', y='extortion_factor_chi', hue='BaseName', marker='o')
+        plt.title('Extortion Factor (chi) vs. Noise')
+        plt.xlabel('Noise')
+        plt.ylabel('Extortion Factor (chi)')
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.tight_layout()
+        plt.savefig('graphs/extortion_factor_vs_noise.png')
+        plt.close()
+        print('Saved plot: graphs/extortion_factor_vs_noise.png')
+    if 'extortion_factor_chi' in all_data.columns and 'prob_end' in all_data.columns:
+        plt.figure(figsize=(12, 8))
+        sns.lineplot(data=all_data, x='prob_end', y='extortion_factor_chi', hue='BaseName', marker='o')
+        plt.title('Extortion Factor (chi) vs. Probabilistic Ending')
+        plt.xlabel('Probabilistic Ending')
+        plt.ylabel('Extortion Factor (chi)')
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.tight_layout()
+        plt.savefig('graphs/extortion_factor_vs_prob_end.png')
+        plt.close()
+        print('Saved plot: graphs/extortion_factor_vs_prob_end.png')
+
+    # Table: Top strategies by median normalized rank, extortion, and SSE
+    if 'BaseName' in all_data.columns and 'Normalized_rank' in all_data.columns:
+        top_rank = all_data.groupby('BaseName')['Normalized_rank'].median().sort_values().head(10)
+        top_rank.to_csv('graphs/top_strategies_by_median_normalized_rank.csv')
+        print('Saved table: graphs/top_strategies_by_median_normalized_rank.csv')
+    if 'BaseName' in all_data.columns and 'extortion_factor_chi' in all_data.columns:
+        top_extortion = all_data.groupby('BaseName')['extortion_factor_chi'].median().sort_values(ascending=False).head(10)
+        top_extortion.to_csv('graphs/top_strategies_by_extortion_factor.csv')
+        print('Saved table: graphs/top_strategies_by_extortion_factor.csv')
+    if 'BaseName' in all_data.columns and 'extortion_SSE' in all_data.columns:
+        top_sse = all_data.groupby('BaseName')['extortion_SSE'].median().sort_values().head(10)
+        top_sse.to_csv('graphs/top_strategies_by_SSE.csv')
+        print('Saved table: graphs/top_strategies_by_SSE.csv')
+
+    # --- A POSTERIORI EXTORTION/CHI/SSE CALCULATION FROM CSVs ---
+    # Only run if both 'Name', 'Opponent', and 'Median_score' are present
+    if 'Name' in all_data.columns and 'Opponent' in all_data.columns and 'Median_score' in all_data.columns:
+        print('Calculating extortion factor (chi) and SSE for each strategy from CSVs...')
+        import numpy as np
+        from sklearn.linear_model import LinearRegression
+        extortion_factor_chi = {}
+        extortion_SSE = {}
+        # Group by tournament type if you want per-tournament-type analysis, or just by strategy
+        for strat in all_data['Name'].unique():
+            # For each opponent, get (self, opp) payoffs
+            df_self = all_data[all_data['Name'] == strat]
+            pairs = []
+            for _, row in df_self.iterrows():
+                opp = row['Opponent']
+                payoff_self = row['Median_score']
+                # Find the reciprocal match (opponent playing as Name, Name as Opponent)
+                reciprocal = all_data[(all_data['Name'] == opp) & (all_data['Opponent'] == strat)]
+                if not reciprocal.empty:
+                    payoff_opp = reciprocal.iloc[0]['Median_score']
+                    pairs.append((payoff_self, payoff_opp))
+            if len(pairs) > 1:
+                X = np.array([p[1] for p in pairs]).reshape(-1, 1)  # opponent payoffs
+                y = np.array([p[0] for p in pairs])  # self payoffs
+                reg = LinearRegression().fit(X, y)
+                chi = reg.coef_[0]
+                y_pred = reg.predict(X)
+                sse = np.sum((y - y_pred) ** 2)
+                extortion_factor_chi[strat] = chi
+                extortion_SSE[strat] = sse
+            else:
+                extortion_factor_chi[strat] = np.nan
+                extortion_SSE[strat] = np.nan
+        # Map back to all_data
+        all_data['extortion_factor_chi'] = all_data['Name'].map(extortion_factor_chi)
+        all_data['extortion_SSE'] = all_data['Name'].map(extortion_SSE)
+        print('Extortion factor and SSE columns added to all_data.')
+
+        # Re-run advanced plots that depend on extortion/SSE
+        # Boxplot: Extortion factor (chi) per strategy
+        if 'BaseName' in all_data.columns and 'extortion_factor_chi' in all_data.columns:
+            plt.figure(figsize=(16, 8))
+            sns.boxplot(data=all_data, x='BaseName', y='extortion_factor_chi')
+            plt.title('Extortion Factor (chi) per Strategy (Post Hoc Calculation)')
+            plt.ylabel('Extortion Factor (chi)')
+            plt.xlabel('Strategy')
+            plt.xticks(rotation=90)
+            plt.tight_layout()
+            plt.savefig('graphs/extortion_factor_chi_boxplot_post_hoc.png')
+            plt.close()
+            print('Saved plot: graphs/extortion_factor_chi_boxplot_post_hoc.png')
+
+        # Boxplot: SSE per strategy
+        if 'BaseName' in all_data.columns and 'extortion_SSE' in all_data.columns:
+            plt.figure(figsize=(16, 8))
+            sns.boxplot(data=all_data, x='BaseName', y='extortion_SSE')
+            plt.title('SSE (Deviation from ZD Linearity) per Strategy (Post Hoc Calculation)')
+            plt.ylabel('Sum of Squared Errors (SSE)')
+            plt.xlabel('Strategy')
+            plt.xticks(rotation=90)
+            plt.tight_layout()
+            plt.savefig('graphs/extortion_SSE_boxplot_post_hoc.png')
+            plt.close()
+            print('Saved plot: graphs/extortion_SSE_boxplot_post_hoc.png')
+
+        # Correlation heatmap including new features
+        extra_numeric = ['Median_score', 'Cooperation_rating', 'Normalized_rank', 'extortion_factor_chi', 'extortion_SSE', 'noise', 'prob_end', 'repetitions', 'turns', 'n_strategies']
+        corr2 = all_data[extra_numeric].corr()
+        plt.figure(figsize=(12, 10))
+        sns.heatmap(corr2, annot=True, cmap='coolwarm')
+        plt.title('Correlation Matrix Including Extortion and Rank Features (Post Hoc)')
+        plt.tight_layout()
+        plt.savefig('graphs/extended_correlation_heatmap_post_hoc.png')
+        plt.close()
+        print('Saved plot: graphs/extended_correlation_heatmap_post_hoc.png')
+
+        # Scatterplot: Cooperation ratio vs. extortion factor
+        if 'Cooperation_rating' in all_data.columns and 'extortion_factor_chi' in all_data.columns:
+            plt.figure(figsize=(12, 8))
+            sns.scatterplot(data=all_data, x='Cooperation_rating', y='extortion_factor_chi', hue='BaseName', alpha=0.7)
+            plt.title('Cooperation Ratio vs. Extortion Factor (chi) (Post Hoc)')
+            plt.xlabel('Cooperation Ratio')
+            plt.ylabel('Extortion Factor (chi)')
+            plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+            plt.tight_layout()
+            plt.savefig('graphs/cooperation_vs_extortion_factor_post_hoc.png')
+            plt.close()
+            print('Saved plot: graphs/cooperation_vs_extortion_factor_post_hoc.png')
+
+        # Scatterplot: Cooperation ratio vs. SSE
+        if 'Cooperation_rating' in all_data.columns and 'extortion_SSE' in all_data.columns:
+            plt.figure(figsize=(12, 8))
+            sns.scatterplot(data=all_data, x='Cooperation_rating', y='extortion_SSE', hue='BaseName', alpha=0.7)
+            plt.title('Cooperation Ratio vs. SSE (Post Hoc)')
+            plt.xlabel('Cooperation Ratio')
+            plt.ylabel('Sum of Squared Errors (SSE)')
+            plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+            plt.tight_layout()
+            plt.savefig('graphs/cooperation_vs_extortion_SSE_post_hoc.png')
+            plt.close()
+            print('Saved plot: graphs/cooperation_vs_extortion_SSE_post_hoc.png')
+
+        # Line plot: Extortion factor vs. noise/prob_end
+        if 'extortion_factor_chi' in all_data.columns and 'noise' in all_data.columns:
+            plt.figure(figsize=(12, 8))
+            sns.lineplot(data=all_data, x='noise', y='extortion_factor_chi', hue='BaseName', marker='o')
+            plt.title('Extortion Factor (chi) vs. Noise (Post Hoc)')
+            plt.xlabel('Noise')
+            plt.ylabel('Extortion Factor (chi)')
+            plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+            plt.tight_layout()
+            plt.savefig('graphs/extortion_factor_vs_noise_post_hoc.png')
+            plt.close()
+            print('Saved plot: graphs/extortion_factor_vs_noise_post_hoc.png')
+        if 'extortion_factor_chi' in all_data.columns and 'prob_end' in all_data.columns:
+            plt.figure(figsize=(12, 8))
+            sns.lineplot(data=all_data, x='prob_end', y='extortion_factor_chi', hue='BaseName', marker='o')
+            plt.title('Extortion Factor (chi) vs. Probabilistic Ending (Post Hoc)')
+            plt.xlabel('Probabilistic Ending')
+            plt.ylabel('Extortion Factor (chi)')
+            plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+            plt.tight_layout()
+            plt.savefig('graphs/extortion_factor_vs_prob_end_post_hoc.png')
+            plt.close()
+            print('Saved plot: graphs/extortion_factor_vs_prob_end_post_hoc.png')
+
+        # Table: Top strategies by median normalized rank, extortion, and SSE
+        if 'BaseName' in all_data.columns and 'Normalized_rank' in all_data.columns:
+            top_rank = all_data.groupby('BaseName')['Normalized_rank'].median().sort_values().head(10)
+            top_rank.to_csv('graphs/top_strategies_by_median_normalized_rank_post_hoc.csv')
+            print('Saved table: graphs/top_strategies_by_median_normalized_rank_post_hoc.csv')
+        if 'BaseName' in all_data.columns and 'extortion_factor_chi' in all_data.columns:
+            top_extortion = all_data.groupby('BaseName')['extortion_factor_chi'].median().sort_values(ascending=False).head(10)
+            top_extortion.to_csv('graphs/top_strategies_by_extortion_factor_post_hoc.csv')
+            print('Saved table: graphs/top_strategies_by_extortion_factor_post_hoc.csv')
+        if 'BaseName' in all_data.columns and 'extortion_SSE' in all_data.columns:
+            top_sse = all_data.groupby('BaseName')['extortion_SSE'].median().sort_values().head(10)
+            top_sse.to_csv('graphs/top_strategies_by_SSE_post_hoc.csv')
+            print('Saved table: graphs/top_strategies_by_SSE_post_hoc.csv')
+
 
