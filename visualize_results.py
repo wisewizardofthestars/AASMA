@@ -232,3 +232,22 @@ if dfs:
                 print(f'Saved plot: graphs/winner_{var}_boxplot.png')
     else:
         print('Could not create variable-vs-winner boxplots: required columns not found.')
+
+    # --- Pairplot: Joint distribution of payoffs for each winning strategy ---
+    if 'BaseName' in all_data.columns and 'Median_score' in all_data.columns and 'run' in all_data.columns and 'tournament_type' in all_data.columns:
+        winners = all_data.loc[all_data.groupby(['run', 'tournament_type'])['Median_score'].idxmax()]
+        payoff_vars = ['R', 'S', 'T', 'P']
+        if all(var in winners.columns for var in payoff_vars):
+            import seaborn as sns
+            sns.pairplot(winners, vars=payoff_vars, hue='BaseName', corner=True, plot_kws={'alpha':0.7})
+            plt.suptitle('Joint Distribution of Payoff Values for Each Winning Strategy', y=1.02)
+            plt.tight_layout()
+            plt.savefig('graphs/winner_payoff_pairplot.png')
+            plt.close()
+            print('Saved plot: graphs/winner_payoff_pairplot.png')
+        else:
+            print('Could not create payoff pairplot: some payoff columns missing.')
+    else:
+        print('Could not create payoff pairplot: required columns not found.')
+
+
