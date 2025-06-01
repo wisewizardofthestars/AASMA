@@ -191,3 +191,44 @@ if dfs:
         print('Saved plot: graphs/strategy_clustering_dendrogram.png')
     else:
         print('Strategy clustering skipped: required columns not found.')
+
+    # --- Correlation between tournament variables and winning strategies ---
+    # For each run and tournament type, find the winning strategy (highest mean median score)
+    if 'BaseName' in all_data.columns and 'Median_score' in all_data.columns and 'run' in all_data.columns and 'tournament_type' in all_data.columns:
+        # Find the winner for each run and tournament type
+        winners = all_data.loc[all_data.groupby(['run', 'tournament_type'])['Median_score'].idxmax()]
+        # Select relevant columns for correlation
+        corr_vars = ['noise', 'prob_end', 'R', 'S', 'T', 'P', 'n_strategies', 'turns', 'repetitions']
+        # Encode winning strategy as categorical codes for correlation
+        winners = winners.copy()
+        winners['WinnerCode'] = winners['BaseName'].astype('category').cat.codes
+        # Compute correlation matrix
+        corr = winners[corr_vars + ['WinnerCode']].corr()
+        plt.figure(figsize=(10, 8))
+        sns.heatmap(corr, annot=True, cmap='coolwarm')
+        plt.title('Correlation between Tournament Variables and Winning Strategy (code)')
+        plt.tight_layout()
+        plt.savefig('graphs/winner_variable_correlation_heatmap.png')
+        plt.close()
+        print('Saved plot: graphs/winner_variable_correlation_heatmap.png')
+    else:
+        print('Could not compute winner-variable correlation: required columns not found.')
+
+    # --- Boxplots: Each variable vs. Winning Strategy ---
+    if 'BaseName' in all_data.columns and 'Median_score' in all_data.columns and 'run' in all_data.columns and 'tournament_type' in all_data.columns:
+        winners = all_data.loc[all_data.groupby(['run', 'tournament_type'])['Median_score'].idxmax()]
+        corr_vars = ['noise', 'prob_end', 'R', 'S', 'T', 'P', 'n_strategies', 'turns', 'repetitions']
+        for var in corr_vars:
+            if var in winners.columns:
+                plt.figure(figsize=(14, 8))
+                sns.boxplot(data=winners, x='BaseName', y=var)
+                plt.title(f'{var} Distribution by Winning Strategy')
+                plt.xlabel('Winning Strategy')
+                plt.ylabel(var)
+                plt.xticks(rotation=90)
+                plt.tight_layout()
+                plt.savefig(f'graphs/winner_{var}_boxplot.png')
+                plt.close()
+                print(f'Saved plot: graphs/winner_{var}_boxplot.png')
+    else:
+        print('Could not create variable-vs-winner boxplots: required columns not found.')
