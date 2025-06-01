@@ -30,6 +30,34 @@ def generate_pd_payoffs(t_range=(4.0, 6.0), max_attempts=1000, precision=2):
             return R, S, T, P
     raise ValueError("Failed to generate valid Prisoner's Dilemma payoffs.")
 
+def generate_better_pd_payoffs(t_range=(4.0, 6.0), r_range=(2.0, 4.0), p_range=(0.0, 2.0), s_range=(-1.0, 1.0), max_attempts=1000, precision=2):
+    """
+    Generates valid Prisoner's Dilemma payoffs which are not safe for zero-determinant strategies
+    Enforces T > R > P > S and 2R > T + S
+
+    Parameters:
+    - t_range: Tuple for (min, max) T value
+    - r_range: Tuple for (min, max) R value
+    - p_range: Tuple for (min, max) P value
+    - s_range: Tuple for (min, max) S value
+    - max_attempts: Maximum number of retries before giving up
+    - precision: Decimal precision to round results
+
+    Returns:
+    - R, S, T, P
+
+    Raises:
+    - ValueError if no valid set is found after max_attempts
+    """
+    for _ in range(max_attempts):
+        T = round(random.uniform(*t_range), precision)
+        R = round(random.uniform(*r_range), precision)
+        P = round(random.uniform(*p_range), precision)
+        S = round(random.uniform(*s_range), precision)
+        if T > R > P > S and 2 * R > T + S:
+            return R, S, T, P
+    raise ValueError("Failed to generate valid Prisoner's Dilemma payoffs.")
+
 def generate_pd_payoffs_zd_safe():
     max_attempts = 1000
     for _ in range(max_attempts):
