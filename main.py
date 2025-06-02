@@ -76,7 +76,7 @@ def generate_pd_payoffs_zd_safe():
     raise ValueError("Unable to generate payoffs valid for ZD strategies.")
 
 def run_once(run_number=None):
-    R, S, T, P = generate_pd_payoffs_zd_safe() 
+    R, S, T, P = generate_better_pd_payoffs() 
     game = axl.Game(r=R, s=S, t=T, p=P)
 
     noise = round(random.uniform(0, 0.1), 2)
