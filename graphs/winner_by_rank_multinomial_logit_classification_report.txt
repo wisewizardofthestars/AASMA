@@ -1,0 +1,28 @@
+                        precision    recall  f1-score   support
+
+            Alternator       0.00      0.00      0.00        33
+      Anti Tit For Tat       0.00      0.00      0.00        25
+                 Bully       0.00      0.00      0.00        79
+            Cooperator       0.00      0.00      0.00        14
+             Cycler DC       0.00      0.00      0.00        66
+              Defector       0.39      0.76      0.52       976
+         DoubleCrosser       0.27      0.07      0.11       557
+        Evolved FSM 16       0.00      0.00      0.00       306
+         Evolved HMM 5       0.28      0.60      0.38       715
+                  GTFT       0.00      0.00      0.00        30
+               Grudger       0.26      0.13      0.17       752
+            Meta Mixer       0.00      0.00      0.00         7
+           Meta Winner       0.00      0.00      0.00        81
+                Random       0.00      0.00      0.00        24
+             Soft Joss       0.00      0.00      0.00        28
+Suspicious Tit For Tat       0.00      0.00      0.00        89
+        Tit For 2 Tats       0.00      0.00      0.00        42
+           Tit For Tat       0.00      0.00      0.00        43
+   Win-Shift Lose-Stay       0.00      0.00      0.00        55
+   Win-Stay Lose-Shift       0.00      0.00      0.00        37
+           ZD-Extort-2       0.00      0.00      0.00        15
+             ZD-GTFT-2       0.00      0.00      0.00        26
+
+              accuracy                           0.33      4000
+             macro avg       0.05      0.07      0.05      4000
+          weighted avg       0.23      0.33      0.24      4000
