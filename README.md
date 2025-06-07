@@ -20,15 +20,11 @@ python3 main.py --runs 10 --filename csv/
 
 For fixed payoffs use:
 ```bash
-python3 main_fixed_payoffs.py
+python3 fixed_payoffs.py
 ```
 
 ## Visualize results
-To visualize the results, you can use the provided Jupyter notebook:
+To visualize the results, you can use the provided Jupyter notebook to visualize the results of the tournaments with random payoffs:
 ```bash
 visualize_results.ipynb
-```
-And also use the following command:
-```bash
-python3 visualize_results.py
 ```

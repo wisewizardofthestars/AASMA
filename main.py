@@ -48,16 +48,11 @@ def run_once(random_payoffs=True, run_number=None, prefix=''):
     turns = random.randint(1, 200)
 
     # Randomly select a subset of strategies for this run
-    #But not every strategy faces every other in every run!
+    # But not every strategy faces every other in every run!
     all_strategy_classes = non_meta_strategies + meta_strategy_classes
     n_strategies = random.randint(3, len(all_strategy_classes))
     selected_classes = random.sample(all_strategy_classes, n_strategies)
     base_classes = [cls for cls in selected_classes if cls in non_meta_strategies]
-
-   # selected_classes = all_strategy_classes
-    #n_strategies = len(selected_classes)
-
-    #base_classes = [cls for cls in all_strategy_classes if cls in non_meta_strategies]
 
     selected_players = []
     for cls in selected_classes:

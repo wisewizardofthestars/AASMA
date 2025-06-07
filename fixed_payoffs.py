@@ -7,6 +7,7 @@ import os
 import pandas as pd
 import csv
 import sklearn
+import argparse
 
 RANDOM_SEED = 42
 random.seed(RANDOM_SEED)
@@ -25,7 +26,7 @@ def run_once(run_number=None):
     turns = random.randint(1, 200)
 
     # Randomly select a subset of strategies for this run
-    #But not every strategy faces every other in every run!
+    # But not every strategy faces every other in every run!
     all_strategy_classes = non_meta_strategies + meta_strategy_classes
     n_strategies = random.randint(3, len(all_strategy_classes))
     selected_classes = random.sample(all_strategy_classes, n_strategies)
@@ -191,72 +192,21 @@ def run_once(run_number=None):
         df['n_strategies'] = n_strategies
         df['run'] = run_number
         df['seed'] = RANDOM_SEED
-        out_csv = os.path.join('csv', f'fixed_{name}_aggregated.csv')
+        out_csv = os.path.join('fixed_payoffs/csv', f'fixed_{name}_aggregated.csv')
         df.to_csv(out_csv, mode='a', header=not os.path.exists(out_csv), index=False)
-    # ...existing code...
-    # Save results to CSV (one file for all runs, like variable payoffs)
-    #for name, tourn in tournaments.items():
-    #    res = tourn.play(processes=os.cpu_count())
-    #    df = pd.DataFrame(res.summarise())
-    #    df['R'] = R
-    #    df['S'] = S
-    #    df['T'] = T
-    #    df['P'] = P
-    #    df['noise'] = noise
-    #    df['prob_end'] = prob_end
-    #    df['repetitions'] = repetitions
-    #    df['turns'] = turns
-    #    df['tournament'] = name
-    #    df['n_strategies'] = n_strategies
-    #    df['run'] = run_number
-    #    df['CC_to_C_rate'] = CC_to_C
-    #    df['CD_to_C_rate'] = CD_to_C
-    #    df['DC_to_C_rate'] = DC_to_C
-    #    df['DD_to_C_rate'] = DD_to_C
-    #    df['memory_usage'] = memory_usage
-    #    df['stochastic'] = stochastic
-    #    df['makes_use_of_game'] = makes_use_of_game
-    #    df['makes_use_of_length'] = makes_use_of_length
-    #    # Calculate extortion factor (chi) and SSE for each strategy
-    #    extortion_factor_chi = []
-    #    extortion_SSE = []
-    #    payoff_matrix = res.payoff_matrix if hasattr(res, 'payoff_matrix') else None
-    #    for idx, name in enumerate(df['Name']):
-    #        if payoff_matrix is not None:
-    #            # Exclude self-play
-    #            self_payoffs = []
-    #            opp_payoffs = []
-    #            for j in range(len(df['Name'])):
-    #                if j == idx:
-    #                    continue
-    #                self_payoffs.append(payoff_matrix[idx][j])
-    #                opp_payoffs.append(payoff_matrix[j][idx])
-    #            if len(self_payoffs) > 1:
-    #                import numpy as np
-    #                from sklearn.linear_model import LinearRegression
-    #                X = np.array(opp_payoffs).reshape(-1, 1)
-    #                y = np.array(self_payoffs)
-    #                reg = LinearRegression().fit(X, y)
-    #                chi = reg.coef_[0]
-    #                y_pred = reg.predict(X)
-    #                sse = np.sum((y - y_pred) ** 2)
-    #                extortion_factor_chi.append(chi)
-    #                extortion_SSE.append(sse)
-    #            else:
-    #                extortion_factor_chi.append(None)
-    #                extortion_SSE.append(None)
-    #        else:
-    #            extortion_factor_chi.append(None)
-    #            extortion_SSE.append(None)
-    #    df['extortion_factor_chi'] = extortion_factor_chi
-    #    df['extortion_SSE'] = extortion_SSE
-    #    # Save to CSV: separate file for each tournament type
-    #    out_csv = os.path.join('csv', f'fixed_{name}_aggregated.csv')
-    #    df.to_csv(out_csv, mode='a', header=not os.path.exists(out_csv), index=False)
 
 if __name__ == "__main__":
-    for i in range(1, 251):
-        print(f" Run {i}/250")
+    parser = argparse.ArgumentParser(description="Run Axelrod tournament simulations with fixed payoffs.")
+    parser.add_argument(
+        "--runs",
+        type=int,
+        default=250,
+        help="Number of runs to execute (default: 250)."
+    )
+    args = parser.parse_args()
+    total_runs = args.runs
+    for i in range(1, total_runs + 1):
+        print(f" Run {i}/{total_runs}")
         run_once(run_number=i)
 
 

@@ -5,7 +5,7 @@ import os
 
 # Use local plot.py for feature label mapping if available
 try:
-    import plot
+    import fixed_payoffs.plot as plot
     features_labels = plot.features_labels
 except Exception:
     features_labels = {
