@@ -24,7 +24,11 @@ python3 fixed_payoffs.py
 ```
 
 ## Visualize results
-To visualize the results, you can use the provided Jupyter notebook to visualize the results of the tournaments with random payoffs:
+You can use the provided Jupyter notebook to visualize the results of the tournaments with random payoffs:
 ```bash
 visualize_results.ipynb
+```
+You can use the provided Jupyter notebook to visualize the results of the tournaments with fixed payoffs:
+```bash
+fixed_payoffs/visualize_results_fixed_payoffs.py
 ```
