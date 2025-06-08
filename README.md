@@ -19,7 +19,7 @@ This project runs repeated tournaments of the Iterated Prisoner's Dilemma with r
    pip install numpy statsmodels pandas axelrod matplotlib seaborn joblib scikit-learn
    ```
 2. Install ffmpeg (required for saving animations as .mp4):
-   - Download from [ffmpeg.org](https://ffmpeg.org/download.html) (choose a Windows build if on Windows).
+   - Download from [ffmpeg.org](https://ffmpeg.org/download.html) (choose a Windows build if on Windows, or install with apt ffmpeg in Ubuntu).
    - Extract and add the `bin` folder to your system PATH.
    - Verify installation by running `ffmpeg -version` in a new terminal.
 
