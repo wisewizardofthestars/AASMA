@@ -198,8 +198,8 @@ if __name__ == "__main__":
     parser.add_argument(
     "--filename",
     type=str,
-    default="",
-    help="Prefix to use for all result and config CSV filenames (default: none)."
+    default="csv/",
+    help="Prefix to use for all result and config CSV filenames (default: csv/)."
     )
     args = parser.parse_args()
 
