@@ -113,7 +113,10 @@ def run_once(random_payoffs=True, run_number=None, prefix=''):
     import matplotlib.pyplot as plt
     import matplotlib.animation as animation
 
+    # Use actual player names for labels
     player1, player2 = selected_players[0], selected_players[1]
+    name1, name2 = repr(player1), repr(player2)
+
     match = axl.Match((player1, player2), turns=turns, game=game)
     actions = match.play()
 
@@ -122,29 +125,55 @@ def run_once(random_payoffs=True, run_number=None, prefix=''):
         payoff1, payoff2 = game.score((a1, a2))
         rounds_data.append((a1, a2, payoff1, payoff2))
 
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 10))
 
     def update(frame):
         ax1.clear()
         ax2.clear()
+        ax3.clear()
 
+        # Show current actions
         a1, a2, _, _ = rounds_data[frame]
         choices = [1 if a1 == axl.Action.C else 0, 1 if a2 == axl.Action.C else 0]
         colors = ["green" if c else "red" for c in choices]
+        action_labels = ["C" if c else "D" for c in choices]
 
-        ax1.bar(["Agent 1", "Agent 2"], choices, color=colors)
+        ax1.bar([name1, name2], choices, color=colors)
         ax1.set_ylim(0, 1)
         ax1.set_yticks([0, 1])
         ax1.set_yticklabels(["D", "C"])
         ax1.set_title(f"Round {frame + 1}: Actions")
+        for i, label in enumerate(action_labels):
+            ax1.text(i, choices[i] + 0.05, label, ha='center', va='bottom', fontsize=12)
 
+        # Cumulative payoffs
         payoff1 = sum(r[2] for r in rounds_data[:frame + 1])
         payoff2 = sum(r[3] for r in rounds_data[:frame + 1])
-        ax2.bar(["Agent 1", "Agent 2"], [payoff1, payoff2], color="blue")
+        ax2.bar([name1, name2], [payoff1, payoff2], color=["blue", "orange"])
         ax2.set_title("Cumulative Payoffs")
+        for i, val in enumerate([payoff1, payoff2]):
+            ax2.text(i, val + 0.05, f"{val:.2f}", ha='center', va='bottom', fontsize=12)
+
+        # History of actions
+        history1 = [1 if r[0] == axl.Action.C else 0 for r in rounds_data[:frame + 1]]
+        history2 = [1 if r[1] == axl.Action.C else 0 for r in rounds_data[:frame + 1]]
+        ax3.plot(range(1, frame + 2), history1, marker='o', label=name1, color="green")
+        ax3.plot(range(1, frame + 2), history2, marker='o', label=name2, color="red")
+        ax3.set_yticks([0, 1])
+        ax3.set_yticklabels(["D", "C"])
+        ax3.set_xlabel("Round")
+        ax3.set_ylabel("Action")
+        ax3.set_title("Action History")
+        ax3.legend(loc="upper right")
+
+        # Add overall info as a super title
+        plt.suptitle(
+            f"{name1} vs {name2} | Payoffs: R={R}, S={S}, T={T}, P={P} | Noise={noise}, Prob_end={prob_end}, Turns={turns}",
+            fontsize=10
+        )
 
     ani = animation.FuncAnimation(fig, update, frames=len(rounds_data), repeat=False)
-    plt.tight_layout()
+    plt.tight_layout(rect=[0, 0, 1, 0.97])
     video_filename = f"{prefix}run_{run_number}_match_animation.mp4"
     ani.save(video_filename, writer="ffmpeg", fps=1)
     print(f"Saved animation to {video_filename}")
