@@ -20,7 +20,7 @@ python3 main.py --runs 10 --filename csv/
 
 For fixed payoffs use:
 ```bash
-python3 fixed_payoffs.py
+python3 fixed_payoffs.py --runs 10
 ```
 
 ## Visualize results
