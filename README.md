@@ -13,12 +13,12 @@ This project runs repeated tournaments of the Iterared prisoner's dilemma with r
 - `scikit-learn`
 
 ## How to Run
-For random payoffs use:
+For random payoffs and only 10 runs use:
 ```bash
 python3 main.py --runs 10 --filename csv/
 ```
 
-For fixed payoffs use:
+For fixed payoffs and only 10 runs use:
 ```bash
 python3 fixed_payoffs.py --runs 10
 ```
