@@ -48,7 +48,6 @@ def run_once(random_payoffs=True, run_number=None, prefix=''):
     turns = random.randint(1, 200)
 
     # Randomly select a subset of strategies for this run
-    # But not every strategy faces every other in every run!
     all_strategy_classes = non_meta_strategies + meta_strategy_classes
     n_strategies = random.randint(3, len(all_strategy_classes))
     selected_classes = random.sample(all_strategy_classes, n_strategies)
@@ -64,7 +63,6 @@ def run_once(random_payoffs=True, run_number=None, prefix=''):
 
     selected_names = [repr(p) for p in selected_players]
 
-    # Save run configuration to CSV
     config_file = f"{prefix}run_configs.csv"
     write_header = not os.path.exists(config_file)
     with open(config_file, 'a', newline='', encoding='utf-8') as f:
@@ -76,7 +74,6 @@ def run_once(random_payoffs=True, run_number=None, prefix=''):
             R, S, T, P, noise, prob_end, repetitions, turns, n_strategies, '|'.join(selected_names)
         ])
 
-    # Print configuration info
     print(f"Payoffs - R: {R}, S: {S}, T: {T}, P: {P}")
     print(f"Noise: {noise}")
     print(f"Proability ending: {prob_end}")
@@ -109,11 +106,9 @@ def run_once(random_payoffs=True, run_number=None, prefix=''):
         output_file = f"{prefix}{name}_aggregated.csv"
         df.to_csv(output_file, mode='a', header=not os.path.exists(output_file), index=False)
 
-    # START: Create animation
     import matplotlib.pyplot as plt
     import matplotlib.animation as animation
 
-    # Use actual player names for labels
     player1, player2 = selected_players[0], selected_players[1]
     name1, name2 = repr(player1), repr(player2)
 
@@ -132,7 +127,6 @@ def run_once(random_payoffs=True, run_number=None, prefix=''):
         ax2.clear()
         ax3.clear()
 
-        # Show current actions
         a1, a2, _, _ = rounds_data[frame]
         choices = [1 if a1 == axl.Action.C else 0, 1 if a2 == axl.Action.C else 0]
         colors = ["green" if c else "red" for c in choices]
@@ -146,7 +140,6 @@ def run_once(random_payoffs=True, run_number=None, prefix=''):
         for i, label in enumerate(action_labels):
             ax1.text(i, choices[i] + 0.05, label, ha='center', va='bottom', fontsize=12)
 
-        # Cumulative payoffs
         payoff1 = sum(r[2] for r in rounds_data[:frame + 1])
         payoff2 = sum(r[3] for r in rounds_data[:frame + 1])
         ax2.bar([name1, name2], [payoff1, payoff2], color=["blue", "orange"])
@@ -154,7 +147,6 @@ def run_once(random_payoffs=True, run_number=None, prefix=''):
         for i, val in enumerate([payoff1, payoff2]):
             ax2.text(i, val + 0.05, f"{val:.2f}", ha='center', va='bottom', fontsize=12)
 
-        # History of actions
         history1 = [1 if r[0] == axl.Action.C else 0 for r in rounds_data[:frame + 1]]
         history2 = [1 if r[1] == axl.Action.C else 0 for r in rounds_data[:frame + 1]]
         ax3.plot(range(1, frame + 2), history1, marker='o', label=name1, color="green")
@@ -166,7 +158,6 @@ def run_once(random_payoffs=True, run_number=None, prefix=''):
         ax3.set_title("Action History")
         ax3.legend(loc="upper right")
 
-        # Add overall info as a super title
         plt.suptitle(
             f"{name1} vs {name2} | Payoffs: R={R}, S={S}, T={T}, P={P} | Noise={noise}, Prob_end={prob_end}, Turns={turns}",
             fontsize=10
@@ -177,7 +168,6 @@ def run_once(random_payoffs=True, run_number=None, prefix=''):
     video_filename = f"{prefix}run_{run_number}_match_animation.mp4"
     ani.save(video_filename, writer="ffmpeg", fps=1)
     print(f"Saved animation to {video_filename}")
-    # END animation block
 
 
 if __name__ == "__main__":
