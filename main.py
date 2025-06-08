@@ -132,13 +132,18 @@ def run_once(random_payoffs=True, run_number=None, prefix=''):
         colors = ["green" if c else "red" for c in choices]
         action_labels = ["C" if c else "D" for c in choices]
 
-        ax1.bar([name1, name2], choices, color=colors)
+        # Draw bars for actions, but set a minimum visible height for 'C' (cooperate)
+        min_height = 0.15
+        bar_heights = [c if c else 0 for c in choices]
+        # If cooperate (1), set to 1; if defect (0), set to min_height for visibility
+        visible_heights = [h if h > 0 else min_height for h in bar_heights]
+        bars = ax1.bar([name1, name2], visible_heights, color=colors)
         ax1.set_ylim(0, 1)
         ax1.set_yticks([0, 1])
         ax1.set_yticklabels(["D", "C"])
         ax1.set_title(f"Round {frame + 1}: Actions")
-        for i, label in enumerate(action_labels):
-            ax1.text(i, choices[i] + 0.05, label, ha='center', va='bottom', fontsize=12)
+        for i, (bar, label) in enumerate(zip(bars, action_labels)):
+            ax1.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.05, label, ha='center', va='bottom', fontsize=12)
 
         payoff1 = sum(r[2] for r in rounds_data[:frame + 1])
         payoff2 = sum(r[3] for r in rounds_data[:frame + 1])
@@ -164,10 +169,15 @@ def run_once(random_payoffs=True, run_number=None, prefix=''):
         )
 
     ani = animation.FuncAnimation(fig, update, frames=len(rounds_data), repeat=False)
-    plt.tight_layout(rect=[0, 0, 1, 0.97])
+    plt.tight_layout(rect=[0, 0, 1, 0.94])  
     video_filename = f"{prefix}run_{run_number}_match_animation.mp4"
-    ani.save(video_filename, writer="ffmpeg", fps=1)
-    print(f"Saved animation to {video_filename}")
+    try:
+        from matplotlib.animation import FFMpegWriter
+        ani.save(video_filename, writer=FFMpegWriter(fps=1), dpi=200)
+        print(f"Saved animation to {video_filename}")
+    except Exception as e:
+        print(f"Could not save animation as .mp4: {e}\nTry installing ffmpeg and ensure it is in your PATH.")
+    # END animation block
 
 
 if __name__ == "__main__":
