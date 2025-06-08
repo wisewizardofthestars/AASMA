@@ -1,34 +1,42 @@
 ## Overview
-This project runs repeated tournaments of the Iterared prisoner's dilemma with randomly generated strategies, saves the results, and visualizes the data. It is designed to explore how different strategies perform against each other in a repeated game setting.
+This project runs repeated tournaments of the Iterated Prisoner's Dilemma with randomly generated strategies, saves the results, and visualizes the data. It is designed to explore how different strategies perform against each other in a repeated game setting, supporting advanced statistical analysis and visualizations.
 
 ## Requirements
 - Python 3.8+
-- `numpy`
-- `statsmodels`
-- `pandas`
-- `axelrod`
-- `matplotlib`
-- `seaborn`
-- `joblib`
-- `scikit-learn`
+- numpy
+- statsmodels
+- pandas
+- axelrod
+- matplotlib
+- seaborn
+- joblib
+- scikit-learn
+- ffmpeg (system executable, for animation saving)
+
+## Installation
+1. Install Python dependencies:
+   ```bash
+   pip install numpy statsmodels pandas axelrod matplotlib seaborn joblib scikit-learn
+   ```
+2. Install ffmpeg (required for saving animations as .mp4):
+   - Download from [ffmpeg.org](https://ffmpeg.org/download.html) (choose a Windows build if on Windows).
+   - Extract and add the `bin` folder to your system PATH.
+   - Verify installation by running `ffmpeg -version` in a new terminal.
 
 ## How to Run
-For random payoffs and only 10 runs use:
+Run with random payoffs (10 runs, results in `csv/`):
 ```bash
-python3 main.py --runs 10 --filename csv/
+python main.py --runs 10 
 ```
 
-For fixed payoffs and only 10 runs use:
-```bash
-python3 fixed_payoffs.py --runs 10
-```
 
-## Visualize results
-You can use the provided Jupyter notebook to visualize the results of the tournaments with random payoffs:
+## Visualize Results
+Use the provided Jupyter notebook to visualize tournament results:
 ```bash
-visualize_results.ipynb
+jupyter notebook visualize_results.ipynb
 ```
-You can use the provided Jupyter notebook to visualize the results of the tournaments with fixed payoffs:
-```bash
-fixed_payoffs/visualize_results_fixed_payoffs.py
-```
+Or run the Python scripts for advanced analysis and plots.
+
+## Notes
+- All result CSVs and plots will be saved in the specified output directory (e.g., `csv/`).
+- For animation saving, ensure ffmpeg is installed and accessible in your PATH.
